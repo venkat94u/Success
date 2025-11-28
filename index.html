@@ -35,8 +35,8 @@ button{cursor:pointer}
 .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.45);margin-top:12px;border:1px solid var(--border)}
 .row{display:flex;justify-content:space-between;align-items:center}
 .muted{color:var(--muted);font-size:13px}
-.grid{display:grid;grid-template-columns:1fr 380px;gap:14px;margin-top:12px}
-@media (max-width:920px){ .grid{grid-template-columns:1fr} .header{flex-direction:column;align-items:flex-start} }
+.grid{display:grid;grid-template-columns:1fr 400px;gap:16px;margin-top:12px;align-items:start}
+@media (max-width:920px){ .grid{grid-template-columns:1fr;gap:12px} .header{flex-direction:column;align-items:flex-start} }
 /* trade list */
 .trade-list{height:260px;overflow:auto;padding:6px;margin-top:8px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
 .trade{display:flex;justify-content:space-between;padding:6px;border-radius:6px;margin-bottom:4px;font-size:13px}
@@ -70,6 +70,8 @@ button{cursor:pointer}
 .big{font-size:18px;font-weight:600;margin-top:4px}
 .small-input{font-size:12px;padding:6px 8px}
 .footer-note{opacity:0.7;font-size:11px}
+.signal-yes{color:#00ff88;font-weight:600}
+.signal-no{color:#9fb0c8;font-weight:600}
 </style>
 </head>
 <body>
@@ -79,6 +81,11 @@ button{cursor:pointer}
     <div>
       <h1 class="title">Orderflow Analyst — Balanced (Mobile)</h1>
       <div class="subtitle">Option C — Microstructure swing (sweep + delta flip) + Deep Wall Radar</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:12px">
+        <div class="small muted">Current Price:</div>
+        <div id="currentPrice" style="font-size:20px;font-weight:600;color:var(--accent)">—</div>
+        <div id="priceChange" style="font-size:14px;font-weight:500">—</div>
+      </div>
     </div>
     <div class="controls">
       <label class="small muted">Symbol</label>
@@ -134,54 +141,92 @@ button{cursor:pointer}
     <!-- LEFT COLUMN -->
     <div>
       <div class="card">
-        <div class="small muted">Sweep & Divergence</div>
-        <div id="sweepInfo" style="margin-top:8px">Sweep: — | Divergence: —</div>
-      </div>
-      <div class="card">
-        <div class="small muted">Divergence Detail</div>
-        <div id="divergenceInfo" style="margin-top:8px">—</div>
-      </div>
-      <div class="card">
-        <div class="small muted">Market Order Bursts</div>
-        <div style="display:flex;gap:14px;margin-top:10px">
-          <div><div class="small muted">Buy Burst</div><div id="buyBurst" class="big">0</div></div>
-          <div><div class="small muted">Sell Burst</div><div id="sellBurst" class="big">0</div></div>
-          <div><div class="small muted">Aggressive</div><div id="aggr" class="big">—</div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="row">
-          <div class="small muted">Recent Trades (live)</div>
-          <div class="small muted">max 200</div>
-        </div>
-        <div id="trades" class="trade-list"></div>
+        <div class="small muted">Sweep Status</div>
+        <div id="sweepInfo" style="margin-top:8px">Sweep: —</div>
       </div>
       <div class="card">
         <div class="small muted">Logs</div>
-        <div id="logs" style="max-height:120px;overflow:auto;margin-top:8px" class="small"></div>
+        <div id="logs" style="max-height:200px;overflow:auto;margin-top:8px" class="small"></div>
       </div>
     </div>
     <!-- RIGHT COLUMN -->
     <div>
       <div class="card">
-        <div class="small muted">Top-of-book</div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px">
-          <div><div class="small muted">Best Bid</div><div id="bestBid" class="big">-</div></div>
-          <div><div class="small muted">Best Ask</div><div id="bestAsk" class="big">-</div></div>
+        <div class="small muted">5 Key Signals (Live)</div>
+        <div style="margin-top:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Liquidity Sweep:</span>
+            <span id="signalSweep" style="font-weight:600">NO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Delta Flip:</span>
+            <span id="signalDeltaFlip" style="font-weight:600">NO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Momentum:</span>
+            <span id="signalMomentum" style="font-weight:600">NO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Wall Shift:</span>
+            <span id="signalWallShift" style="font-weight:600">NO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Reaction Speed:</span>
+            <span id="signalReaction" style="font-weight:600">NO</span>
+          </div>
         </div>
       </div>
       <div class="card">
-        <div class="small muted">Wall Clusters</div>
-        <div style="margin-top:8px">
-          <div class="small muted">Buy clusters: <span id="buyCluster">0</span></div>
-          <div class="small muted">Sell clusters: <span id="sellCluster">0</span></div>
-          <div style="margin-top:10px">
-            <div class="small muted">Top buy walls</div>
-            <div id="topBids" class="table"></div>
+        <div class="small muted">Quick Indicators</div>
+        <div style="margin-top:8px;font-size:13px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Liquidity Sweep:</span>
+            <span id="indicatorLiquiditySweep" style="font-weight:600">NO</span>
           </div>
-          <div style="margin-top:10px">
-            <div class="small muted">Top sell walls</div>
-            <div id="topAsks" class="table"></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>Delta Flip:</span>
+            <span id="indicatorDeltaFlip" style="font-weight:600">NO</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Reaction:</span>
+            <span id="indicatorReaction" style="font-weight:600">NO</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="small muted">Wall Clusters Analysis</div>
+        <div style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span class="small muted">Buy clusters:</span>
+            <span id="buyCluster" style="font-weight:600">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span class="small muted">Sell clusters:</span>
+            <span id="sellCluster" style="font-weight:600">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span class="small muted">Total Buy Wall Qty:</span>
+            <span id="totalBuyWallQty" style="font-weight:600">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span class="small muted">Total Sell Wall Qty:</span>
+            <span id="totalSellWallQty" style="font-weight:600">0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span class="small muted">Largest Buy Wall:</span>
+            <span id="largestBuyWall" style="font-weight:600">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <span class="small muted">Largest Sell Wall:</span>
+            <span id="largestSellWall" style="font-weight:600">—</span>
+          </div>
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div class="small muted" style="margin-bottom:6px">Top 12 Buy Walls (Price — Qty)</div>
+            <div id="topBids" class="table" style="max-height:180px;overflow:auto;font-size:12px"></div>
+          </div>
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div class="small muted" style="margin-bottom:6px">Top 12 Sell Walls (Price — Qty)</div>
+            <div id="topAsks" class="table" style="max-height:180px;overflow:auto;font-size:12px"></div>
           </div>
         </div>
       </div>
@@ -221,15 +266,27 @@ button{cursor:pointer}
   </div>
   <!-- L2 walls bottom -->
   <div class="card">
-    <div class="small muted">L2 Walls (depth20)</div>
+    <div class="small muted">L2 Order Book Depth (depth20)</div>
+    <div style="display:flex;gap:12px;margin-top:8px;margin-bottom:8px;flex-wrap:wrap">
+      <div style="flex:1;min-width:120px">
+        <div class="small muted">Best Bid: <span id="bestBid" style="font-weight:600">-</span></div>
+        <div class="small muted">Best Ask: <span id="bestAsk" style="font-weight:600">-</span></div>
+        <div class="small muted">Spread: <span id="spread" style="font-weight:600">-</span></div>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <div class="small muted">Bid Levels: <span id="bidLevels" style="font-weight:600">0</span></div>
+        <div class="small muted">Ask Levels: <span id="askLevels" style="font-weight:600">0</span></div>
+        <div class="small muted">Mid Price: <span id="midPrice" style="font-weight:600">-</span></div>
+      </div>
+    </div>
     <div class="l2-grid" style="margin-top:8px">
       <div>
-        <div class="small muted">BIDS (price — qty)</div>
-        <div id="buyWalls" class="table" style="max-height:260px;overflow:auto;margin-top:6px"></div>
+        <div class="small muted" style="margin-bottom:6px">BIDS (Price — Qty — % from Mid)</div>
+        <div id="buyWalls" class="table" style="max-height:320px;overflow:auto;margin-top:6px;font-size:12px"></div>
       </div>
       <div>
-        <div class="small muted">ASKS (price — qty)</div>
-        <div id="sellWalls" class="table" style="max-height:260px;overflow:auto;margin-top:6px"></div>
+        <div class="small muted" style="margin-bottom:6px">ASKS (Price — Qty — % from Mid)</div>
+        <div id="sellWalls" class="table" style="max-height:320px;overflow:auto;margin-top:6px;font-size:12px"></div>
       </div>
     </div>
   </div>
@@ -268,13 +325,23 @@ let lastOrderbookSnapshot = null;
 let agg1m = []; // {tStart, buyVol, sellVol, delta, price}
 let agg5m = []; // same structure
 
+/* ---------- Current Signal State ---------- */
+let currentSignals = {
+  sweep: 'NO',
+  deltaFlip: 'NO',
+  momentum: 'NO',
+  wallShift: 'NO',
+  reaction: 'NO',
+  sweepLow: 'NO',
+  reactionSpeed: 'NO'
+};
+
 /* ---------- UI refs ---------- */
 const symbolSelect = document.getElementById('symbol');
 const modeSelect = document.getElementById('modeSelect');
 const connectBtn = document.getElementById('connectBtn');
 const disconnectBtn = document.getElementById('disconnectBtn');
 const statusEl = document.getElementById('status');
-const tradesEl = document.getElementById('trades');
 const logsEl = document.getElementById('logs');
 const buyWallsEl = document.getElementById('buyWalls');
 const sellWallsEl = document.getElementById('sellWalls');
@@ -286,16 +353,22 @@ const volsEl = document.getElementById('vols');
 const cumlEl = document.getElementById('cumlDelta');
 const strengthEl = document.getElementById('strength');
 const sweepInfoEl = document.getElementById('sweepInfo');
-const divergenceInfoEl = document.getElementById('divergenceInfo');
 const swingPanelContainer = document.getElementById('swingPanelContainer');
-const buyBurstEl = document.getElementById('buyBurst');
-const sellBurstEl = document.getElementById('sellBurst');
-const aggrEl = document.getElementById('aggr');
 const wallSizeInput = document.getElementById('wallSize');
-const burstCntInput = document.getElementById('burstCnt');
 const clearBtn = document.getElementById('clearBtn');
 const downloadBtn = document.getElementById('downloadBtn');
 const calibEl = document.getElementById('calib');
+/* Signal display refs */
+const signalSweepEl = document.getElementById('signalSweep');
+const signalDeltaFlipEl = document.getElementById('signalDeltaFlip');
+const signalMomentumEl = document.getElementById('signalMomentum');
+const signalWallShiftEl = document.getElementById('signalWallShift');
+const signalReactionEl = document.getElementById('signalReaction');
+const indicatorLiquiditySweepEl = document.getElementById('indicatorLiquiditySweep');
+const indicatorDeltaFlipEl = document.getElementById('indicatorDeltaFlip');
+const indicatorReactionEl = document.getElementById('indicatorReaction');
+const currentPriceEl = document.getElementById('currentPrice');
+const priceChangeEl = document.getElementById('priceChange');
 
 /* ---------- UTIL ---------- */
 const f = v => (v === undefined || v === null) ? 0 : parseFloat(v);
@@ -343,35 +416,108 @@ function scheduleUI(){
 }
 
 /* ---------- UPDATE UI ---------- */
+let lastDisplayedPrice = null;
 function updateUI(){
   volsEl.innerText = `${buyVol.toFixed(6)} / ${sellVol.toFixed(6)}`;
   cumlEl.innerText = cumDelta.toFixed(6);
+  
+  // Update current price at top
+  let currentPrice = lastPrice;
+  if(!currentPrice) {
+    // Fallback to mid price from orderbook
+    const bidsByPrice = bids.map(x=>[f(x[0]), f(x[1])]).sort((a,b)=>b[0]-a[0]);
+    const asksByPrice = asks.map(x=>[f(x[0]), f(x[1])]).sort((a,b)=>a[0]-b[0]);
+    const bestBid = bidsByPrice.length ? bidsByPrice[0][0] : null;
+    const bestAsk = asksByPrice.length ? asksByPrice[0][0] : null;
+    if(bestBid && bestAsk) {
+      currentPrice = (bestBid + bestAsk) / 2;
+    }
+  }
+  
+  if(currentPrice) {
+    currentPriceEl.innerText = currentPrice.toFixed(4);
+    if(lastDisplayedPrice !== null) {
+      const change = currentPrice - lastDisplayedPrice;
+      const changePct = (change / lastDisplayedPrice) * 100;
+      if(change > 0) {
+        priceChangeEl.innerText = `+${change.toFixed(4)} (+${changePct.toFixed(2)}%)`;
+        priceChangeEl.style.color = '#00ff88';
+      } else if(change < 0) {
+        priceChangeEl.innerText = `${change.toFixed(4)} (${changePct.toFixed(2)}%)`;
+        priceChangeEl.style.color = '#ff7b7b';
+      } else {
+        priceChangeEl.innerText = '0.0000 (0.00%)';
+        priceChangeEl.style.color = 'var(--muted)';
+      }
+    } else {
+      priceChangeEl.innerText = '';
+    }
+    lastDisplayedPrice = currentPrice;
+  } else {
+    currentPriceEl.innerText = '—';
+    priceChangeEl.innerText = '';
+  }
+  
   // best bid/ask from L2 snapshot
   const bidsByPrice = bids.map(x=>[f(x[0]), f(x[1])]).sort((a,b)=>b[0]-a[0]);
   const asksByPrice = asks.map(x=>[f(x[0]), f(x[1])]).sort((a,b)=>a[0]-b[0]);
-  document.getElementById('bestBid').innerText = bidsByPrice.length ? bidsByPrice[0][0] : '-';
-  document.getElementById('bestAsk').innerText = asksByPrice.length ? asksByPrice[0][0] : '-';
-  // top walls list
+  const bestBid = bidsByPrice.length ? bidsByPrice[0][0] : null;
+  const bestAsk = asksByPrice.length ? asksByPrice[0][0] : null;
+  
+  // Update L2 depth metrics
+  document.getElementById('bestBid').innerText = bestBid ? bestBid.toFixed(4) : '-';
+  document.getElementById('bestAsk').innerText = bestAsk ? bestAsk.toFixed(4) : '-';
+  document.getElementById('bidLevels').innerText = String(bidsByPrice.length);
+  document.getElementById('askLevels').innerText = String(asksByPrice.length);
+  
+  if(bestBid && bestAsk) {
+    const spread = bestAsk - bestBid;
+    const midPrice = (bestBid + bestAsk) / 2;
+    const spreadPct = (spread / midPrice) * 100;
+    document.getElementById('spread').innerText = `${spread.toFixed(4)} (${spreadPct.toFixed(3)}%)`;
+    document.getElementById('midPrice').innerText = midPrice.toFixed(4);
+    
+    // Enhanced L2 walls display with % from mid
+    buyWallsEl.innerHTML = bidsByPrice.map(it=>{
+      const pctFromMid = ((it[0] - midPrice) / midPrice) * 100;
+      return `${it[0].toFixed(4)} — ${it[1].toFixed(4)} — ${pctFromMid.toFixed(2)}%`;
+    }).join('<br>');
+    sellWallsEl.innerHTML = asksByPrice.map(it=>{
+      const pctFromMid = ((it[0] - midPrice) / midPrice) * 100;
+      return `${it[0].toFixed(4)} — ${it[1].toFixed(4)} — ${pctFromMid.toFixed(2)}%`;
+    }).join('<br>');
+  } else {
+    document.getElementById('spread').innerText = '-';
+    document.getElementById('midPrice').innerText = '-';
+    buyWallsEl.innerHTML = bidsByPrice.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
+    sellWallsEl.innerHTML = asksByPrice.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
+  }
+  
+  // Enhanced wall clusters analysis
   const topB = bidsByPrice.slice().sort((a,b)=>b[1]-a[1]).slice(0,12);
   const topA = asksByPrice.slice().sort((a,b)=>b[1]-a[1]).slice(0,12);
-  topBidsEl.innerHTML = topB.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
-  topAsksEl.innerHTML = topA.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
-  buyWallsEl.innerHTML = bidsByPrice.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
-  sellWallsEl.innerHTML = asksByPrice.map(it=>`${it[0]} — ${it[1]}`).join('<br>');
-  // clusters
+  topBidsEl.innerHTML = topB.map(it=>`${it[0].toFixed(4)} — ${it[1].toFixed(4)}`).join('<br>');
+  topAsksEl.innerHTML = topA.map(it=>`${it[0].toFixed(4)} — ${it[1].toFixed(4)}`).join('<br>');
+  
+  // Wall cluster metrics
   const wallSize = parseFloat(wallSizeInput.value) || WALL_SIZE_DEFAULT;
   const buyClusterCount = topB.filter(it=>it[1] > wallSize).length;
   const sellClusterCount = topA.filter(it=>it[1] > wallSize).length;
   buyClusterEl.innerText = String(buyClusterCount);
   sellClusterEl.innerText = String(sellClusterCount);
-  // bursts
-  const windowStart = now() - BURST_WINDOW_MS;
-  const recentWindow = recentTrades.filter(r => r.ts >= windowStart);
-  const buyAgg = recentWindow.filter(r => r.side === 'buy').length;
-  const sellAgg = recentWindow.filter(r => r.side === 'sell').length;
-  buyBurstEl.innerText = String(buyAgg);
-  sellBurstEl.innerText = String(sellAgg);
-  aggrEl.innerText = buyAgg>sellAgg ? 'BUY' : (sellAgg>buyAgg ? 'SELL' : '—');
+  
+  // Total wall quantities
+  const totalBuyQty = bidsByPrice.reduce((sum, it) => sum + it[1], 0);
+  const totalSellQty = asksByPrice.reduce((sum, it) => sum + it[1], 0);
+  document.getElementById('totalBuyWallQty').innerText = totalBuyQty.toFixed(2);
+  document.getElementById('totalSellWallQty').innerText = totalSellQty.toFixed(2);
+  
+  // Largest walls
+  const largestBuy = topB.length > 0 ? topB[0] : null;
+  const largestSell = topA.length > 0 ? topA[0] : null;
+  document.getElementById('largestBuyWall').innerText = largestBuy ? `${largestBuy[0].toFixed(4)} (${largestBuy[1].toFixed(2)})` : '—';
+  document.getElementById('largestSellWall').innerText = largestSell ? `${largestSell[0].toFixed(4)} (${largestSell[1].toFixed(2)})` : '—';
+  
   // strength
   const ratio = buyVol / Math.max(sellVol, 1e-9);
   if(ratio > 1.6) strengthEl.innerText = 'BUYERS DOMINANT';
@@ -380,12 +526,28 @@ function updateUI(){
   else if(ratio < 0.6) strengthEl.innerText = 'Sellers Strong';
   else strengthEl.innerText = 'Balanced';
   
-  // update divergence periodically
-  try{ 
-    const divText = detectDeltaDivergence();
-    divergenceInfoEl.innerHTML = divText;
-  }catch(e){ 
-    divergenceInfoEl.innerText = '—'; 
+  // Update signals continuously (check delta flip, momentum, etc.)
+  if(lastPrice !== null) {
+    const deltaSide = cumDelta > 0 ? 'buy' : 'sell';
+    const deltaFlipToBuy = lastDeltaSide === 'sell' && deltaSide === 'buy';
+    const deltaFlipToSell = lastDeltaSide === 'buy' && deltaSide === 'sell';
+    const momentum = Math.abs(cumDelta) > 25;
+    const wallShift = wallShiftDetected();
+    const sweepHigh = (lastHigh !== null && lastPrice > lastHigh);
+    const sweepLow = (lastLow !== null && lastPrice < lastLow);
+    // Reaction: price moved faster than previous move (simplified check)
+    const reaction = (lastPrice2 !== null && lastPrice !== null) ? 
+      (Math.abs(lastPrice - lastPrice2) > 0.0001) : false;
+    
+    currentSignals = {
+      sweep: (sweepHigh || sweepLow) ? 'YES' : 'NO',
+      deltaFlip: (deltaFlipToBuy || deltaFlipToSell) ? 'YES' : 'NO',
+      momentum: momentum ? 'YES' : 'NO',
+      wallShift: wallShift ? 'YES' : 'NO',
+      reaction: reaction ? 'YES' : 'NO',
+      sweepLow: sweepLow ? 'YES' : 'NO'
+    };
+    updateSignalDisplays(currentSignals);
   }
 }
 
@@ -397,9 +559,21 @@ function clearAll(){
   lastPrice = lastPrice2 = null;
   lastHigh = lastLow = null;
   lastDeltaSide = null;
+  lastDisplayedPrice = null;
   agg1m = []; agg5m = [];
   swingPanelContainer.innerHTML = '';
   logsEl.innerHTML = '';
+  // Reset signals
+  currentSignals = {
+    sweep: 'NO',
+    deltaFlip: 'NO',
+    momentum: 'NO',
+    wallShift: 'NO',
+    reaction: 'NO',
+    sweepLow: 'NO',
+    reactionSpeed: 'NO'
+  };
+  updateSignalDisplays(currentSignals);
   updateUI();
   log('State cleared');
 }
@@ -432,9 +606,23 @@ function aggregateConfluence(price, qty, side, ts){
 /* ---------- DIVERGENCE DETECTION ---------- */
 /* Using last 4 1-minute buckets: check price vs delta divergence */
 function detectDeltaDivergence(){
+  if(agg1m.length === 0) {
+    return `No data yet`;
+  }
+  
   if(agg1m.length < 4) {
+    // Show partial information if we have some buckets
+    const available = agg1m.slice(-agg1m.length);
+    if(available.length >= 2) {
+      const first = available[0];
+      const last = available[available.length - 1];
+      const priceChange = ((last.price - first.price) / first.price) * 100;
+      const deltaChange = last.delta - first.delta;
+      return `Collecting data (${agg1m.length}/4 buckets)<br><small style="opacity:0.7">Current: Price ${priceChange >= 0 ? '↑' : '↓'}${Math.abs(priceChange).toFixed(2)}%, Delta ${deltaChange >= 0 ? '↑' : '↓'}${Math.abs(deltaChange).toFixed(2)}</small>`;
+    }
     return `Waiting for data (${agg1m.length}/4 buckets)`;
   }
+  
   const last4 = agg1m.slice(-4);
   // compare first vs last
   const p0 = last4[0].price;
@@ -465,6 +653,35 @@ function detectDeltaDivergence(){
   result += `<br><small style="opacity:0.7">Buckets: P0=${p0.toFixed(2)} Δ0=${d0.toFixed(2)} → P3=${p3.toFixed(2)} Δ3=${d3.toFixed(2)}</small>`;
   
   return result;
+}
+
+/* ---------- UPDATE SIGNAL DISPLAYS ---------- */
+function updateSignalDisplays(signals){
+  // Update 5 key signals
+  signalSweepEl.innerText = signals.sweep || 'NO';
+  signalSweepEl.className = signals.sweep === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  signalDeltaFlipEl.innerText = signals.deltaFlip || 'NO';
+  signalDeltaFlipEl.className = signals.deltaFlip === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  signalMomentumEl.innerText = signals.momentum || 'NO';
+  signalMomentumEl.className = signals.momentum === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  signalWallShiftEl.innerText = signals.wallShift || 'NO';
+  signalWallShiftEl.className = signals.wallShift === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  signalReactionEl.innerText = signals.reaction || 'NO';
+  signalReactionEl.className = signals.reaction === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  // Update quick indicators
+  indicatorLiquiditySweepEl.innerText = signals.sweep || 'NO';
+  indicatorLiquiditySweepEl.className = signals.sweep === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  indicatorDeltaFlipEl.innerText = signals.deltaFlip || 'NO';
+  indicatorDeltaFlipEl.className = signals.deltaFlip === 'YES' ? 'signal-yes' : 'signal-no';
+  
+  indicatorReactionEl.innerText = signals.reaction || 'NO';
+  indicatorReactionEl.className = signals.reaction === 'YES' ? 'signal-yes' : 'signal-no';
 }
 
 /* ---------- SWING ENGINE ---------- */
@@ -525,8 +742,14 @@ function detectSwing(price){
     deltaFlip: (deltaFlipToBuy || deltaFlipToSell) ? 'YES' : 'NO',
     momentum: momentum ? 'YES' : 'NO',
     wallShift: wallShift ? 'YES' : 'NO',
-    reaction: reaction ? 'YES' : 'NO'
+    reaction: reaction ? 'YES' : 'NO',
+    sweepLow: sweepLow ? 'YES' : 'NO'
   };
+  
+  // Always update current signals and display
+  currentSignals = swingStatus;
+  updateSignalDisplays(currentSignals);
+  
   // fire when mandatory combo meets:
   if(sweepHigh && deltaFlipToSell){
     showSwingPanel('HIGH', price, swingStatus);
@@ -549,12 +772,12 @@ function handleDepthPayload(payload){
   scheduleUI();
 }
 function handleTradePayload(t){
-  // t.p price, t.q qty, t.m maker flag
+  // t.p price, t.q qty, t.m maker flag, t.ts optional timestamp (for historical replay)
   const price = f(t.p);
   const qty = f(t.q);
   const isMaker = !!t.m;
   const side = isMaker ? 'sell' : 'buy';
-  const ts = now();
+  const ts = t.ts || now(); // Use provided timestamp for historical replay, otherwise current time
   // record
   recentTrades.unshift({ price, qty, side, ts });
   if(recentTrades.length > 2000) recentTrades.pop();
@@ -566,21 +789,8 @@ function handleTradePayload(t){
   lastPrice = price;
   // aggregate
   aggregateConfluence(price, qty, side, ts);
-  // display
-  const el = document.createElement('div');
-  el.className = 'trade ' + (side === 'buy' ? 'buy' : 'sell');
-  el.innerHTML = `<div style="opacity:0.9">${side.toUpperCase()} <span style="opacity:0.6">${price}</span></div><div>${qty.toFixed(6)}</div>`;
-  tradesEl.prepend(el);
-  while(tradesEl.childElementCount > MAX_TRADES_DISPLAY) tradesEl.removeChild(tradesEl.lastChild);
   // detect swing
   detectSwing(price);
-  // update divergence UI
-  try{ 
-    const divText = detectDeltaDivergence();
-    divergenceInfoEl.innerHTML = divText;
-  }catch(e){ 
-    divergenceInfoEl.innerText = '—'; 
-  }
   // update sweep UI (sweep rebuilt in detectSwing logic)
   const sweepText = (lastHigh === null && lastLow === null) ? '—' : `Sweep: High=${(lastPrice>lastHigh? 'YES':'NO')} | Low=${(lastPrice<lastLow? 'YES':'NO')}`;
   sweepInfoEl.innerText = sweepText;
@@ -719,11 +929,15 @@ async function loadHistoricalTrades(sym){
       return;
     }
     log(`Loaded ${data.length} historical trades — Replaying...`);
-    // Replay each trade (small delay avoided for speed)
+    // Replay each trade with actual timestamps for proper aggregation
     for(const t of data){
-      const trade = { p: t.p, q: t.q, m: t.m };
+      // Use actual trade timestamp (T is in milliseconds)
+      const tradeTs = t.T || t.t || Date.now();
+      const trade = { p: t.p, q: t.q, m: t.m, ts: tradeTs };
       handleTradePayload(trade);
     }
+    // Force UI update after replay
+    updateUI();
     log("Historical replay complete — Engine is fully initialized!");
   } catch (e) {
     console.error(e);
@@ -783,9 +997,18 @@ async function fetchDeepSnapshot(sym){
     const res = await fetch(url);
     if(!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    // data.b and data.a are arrays of [price, qty] strings
-    deepBids = (data.b || []).map(x => [safeParseNumber(x[0]), safeParseNumber(x[1])]);
-    deepAsks = (data.a || []).map(x => [safeParseNumber(x[0]), safeParseNumber(x[1])]);
+    // Binance depth API returns 'bids' and 'asks' arrays (or 'b' and 'a' in some formats)
+    // Each entry is [price, quantity] as strings
+    const bidsData = data.bids || data.b || [];
+    const asksData = data.asks || data.a || [];
+    
+    if(bidsData.length === 0 && asksData.length === 0){
+      log(`Deep snapshot warning: Empty response for ${sym}. Response keys: ${Object.keys(data).join(', ')}`);
+      console.log('Full API response:', data);
+    }
+    
+    deepBids = bidsData.map(x => [safeParseNumber(x[0]), safeParseNumber(x[1])]);
+    deepAsks = asksData.map(x => [safeParseNumber(x[0]), safeParseNumber(x[1])]);
     // keep them sorted (bids desc, asks asc)
     deepBids.sort((a,b)=>b[0]-a[0]);
     deepAsks.sort((a,b)=>a[0]-b[0]);
@@ -794,7 +1017,7 @@ async function fetchDeepSnapshot(sym){
     computeFarWalls();
   }catch(err){
     console.warn('deep snapshot failed', err);
-    log('Deep snapshot fetch failed');
+    log(`Deep snapshot fetch failed: ${err.message}`);
   }
 }
 
@@ -834,26 +1057,56 @@ function computeFarWalls(){
     const sellsThresholdPrice = currentPrice * (1 + distPct/100);
 
     // find buys below threshold and qty >= minQty (nearest first)
-    const candidateBuys = deepBids
+    let candidateBuys = deepBids
       .filter(([p,q]) => p <= buyThresholdPrice && q >= minQty)
       .sort((a,b)=>b[0]-a[0]) // nearest below = highest price first
-      .slice(0, 50); // take a bit more to later compress into 5 near clusters
+      .slice(0, 50);
 
-    // cluster or compress buys that are "near to each other" (optional)
-    // We'll pick 5 nearest distinct-price entries (they asked "one after another near to each other")
-    const buysSelected = candidateBuys.slice(0,5);
+    // If no buys found with filters, fallback to top 5 largest buys below price (ignore distance filter)
+    let buysSelected = candidateBuys.slice(0,5);
+    if(buysSelected.length === 0 && deepBids.length > 0) {
+      buysSelected = deepBids
+        .filter(([p,q]) => p < currentPrice && q >= (minQty * 0.5)) // Relax qty filter slightly
+        .sort((a,b)=>b[1]-a[1]) // Sort by quantity (largest first)
+        .slice(0, 5)
+        .sort((a,b)=>b[0]-a[0]); // Then sort by price (nearest first)
+    }
+    // Final fallback: just top 5 largest bids below price
+    if(buysSelected.length === 0 && deepBids.length > 0) {
+      buysSelected = deepBids
+        .filter(([p,q]) => p < currentPrice)
+        .sort((a,b)=>b[1]-a[1]) // Sort by quantity
+        .slice(0, 5)
+        .sort((a,b)=>b[0]-a[0]); // Then by price
+    }
 
     // find sells above threshold and qty >= minQty (nearest first)
-    const candidateSells = deepAsks
+    let candidateSells = deepAsks
       .filter(([p,q]) => p >= sellsThresholdPrice && q >= minQty)
       .sort((a,b)=>a[0]-b[0]) // nearest above = lowest price first
       .slice(0,50);
 
-    const sellsSelected = candidateSells.slice(0,5);
+    let sellsSelected = candidateSells.slice(0,5);
+    // If no sells found with filters, fallback to top 5 largest sells above price
+    if(sellsSelected.length === 0 && deepAsks.length > 0) {
+      sellsSelected = deepAsks
+        .filter(([p,q]) => p > currentPrice && q >= (minQty * 0.5)) // Relax qty filter slightly
+        .sort((a,b)=>b[1]-a[1]) // Sort by quantity (largest first)
+        .slice(0, 5)
+        .sort((a,b)=>a[0]-b[0]); // Then sort by price (nearest first)
+    }
+    // Final fallback: just top 5 largest asks above price
+    if(sellsSelected.length === 0 && deepAsks.length > 0) {
+      sellsSelected = deepAsks
+        .filter(([p,q]) => p > currentPrice)
+        .sort((a,b)=>b[1]-a[1]) // Sort by quantity
+        .slice(0, 5)
+        .sort((a,b)=>a[0]-b[0]); // Then by price
+    }
 
-    // Render buys
+    // Render buys - always show something if data exists
     if(buysSelected.length === 0) {
-      farBuysEl.innerHTML = `<span style="opacity:0.6">No large buys found (filter: ${distPct}% below, min qty: ${minQty})</span>`;
+      farBuysEl.innerHTML = '<span style="opacity:0.6">No buy walls available</span>';
     } else {
       const rows = buysSelected.map(([p,q])=>{
         const pctDist = ((currentPrice - p) / currentPrice) * 100;
@@ -862,9 +1115,9 @@ function computeFarWalls(){
       farBuysEl.innerHTML = rows.join('');
     }
 
-    // Render sells
+    // Render sells - always show something if data exists
     if(sellsSelected.length === 0) {
-      farSellsEl.innerHTML = `<span style="opacity:0.6">No large sells found (filter: ${distPct}% above, min qty: ${minQty})</span>`;
+      farSellsEl.innerHTML = '<span style="opacity:0.6">No sell walls available</span>';
     } else {
       const rows = sellsSelected.map(([p,q])=>{
         const pctDist = ((p - currentPrice) / currentPrice) * 100;
